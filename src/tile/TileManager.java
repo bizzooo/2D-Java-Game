@@ -19,7 +19,6 @@ public class TileManager {
 
     public TileManager(GamePanel gamePanel){
         this.gamePanel = gamePanel;
-
         tile = new Tile[25];
         mapTileNum = new int[gamePanel.maxWorldCol][gamePanel.maxWorldRow];
 
@@ -89,6 +88,9 @@ public class TileManager {
     }
 
     public void renderMap(Graphics2D g2){
+
+        UtilityTool uTool = new UtilityTool(gamePanel);
+
         int worldCol = 0;
         int worldRow = 0;
 
@@ -101,11 +103,26 @@ public class TileManager {
             int screenX = worldX - gamePanel.player.worldX + gamePanel.player.screenX;
             int screenY = worldY - gamePanel.player.worldY + gamePanel.player.screenY;
 
-            if(worldX + gamePanel.tileSize> gamePanel.player.worldX - gamePanel.player.screenX &&
-               worldX - gamePanel.tileSize< gamePanel.player.worldX + gamePanel.player.screenX &&
-               worldY + gamePanel.tileSize> gamePanel.player.worldY - gamePanel.player.screenY &&
-               worldY - gamePanel.tileSize< gamePanel.player.worldY + gamePanel.player.screenY) {
+            //Stop moving the camera at the edge of the map
+            if(gamePanel.player.screenX > gamePanel.player.worldX){
+                screenX = worldX;
+            }
+            if(gamePanel.player.screenY > gamePanel.player.worldY){
+                screenY = worldY;
+            }
+            int rightOffset = gamePanel.screenWidth - gamePanel.player.screenX;
+            if(rightOffset > gamePanel.worldWidth - gamePanel.player.worldX){
+                screenX = gamePanel.screenWidth - (gamePanel.worldWidth - worldX);
+            }
+            int bottomOffset = gamePanel.screenHeight - gamePanel.player.screenY;
+            if(bottomOffset > gamePanel.worldHeight - gamePanel.player.worldY){
+                screenY = gamePanel.screenHeight - (gamePanel.worldHeight - worldY);
+            }
 
+            if(uTool.isWithinScreenBounds(worldX, worldY, gamePanel)){
+                    g2.drawImage(tile[tileNum].image, screenX, screenY, null);
+            }else if(gamePanel.player.screenX > gamePanel.player.worldX || gamePanel.player.screenY > gamePanel.player.worldY ||
+                    rightOffset > gamePanel.worldWidth - gamePanel.player.worldX || bottomOffset > gamePanel.worldHeight - gamePanel.player.worldY){
                 g2.drawImage(tile[tileNum].image, screenX, screenY, null);
             }
 

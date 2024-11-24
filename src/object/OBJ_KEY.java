@@ -1,14 +1,12 @@
 package object;
 
+import entity.Entity;
 import main.GamePanel;
 
-public class OBJ_KEY extends SuperObject {
+public class OBJ_KEY extends Entity {
     public OBJ_KEY(GamePanel gamePanel) {
+        super(gamePanel);
         name = "KEY";
-        try {
-            image = loadImage("/resources/objects/key.png", gamePanel);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        down1 = loadImage("/resources/objects/key.png", gamePanel);
     }
 }

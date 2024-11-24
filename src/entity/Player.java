@@ -2,38 +2,36 @@ package entity;
 
 import main.GamePanel;
 import main.KeyHandler;
-import main.UtilityTool;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.Objects;
 
-public class Player extends Entity{
-    GamePanel gamePanel;
+public class Player extends Entity {
     KeyHandler keyHandler;
 
     public final int screenX;
     public final int screenY;
-    public int hasKey = 0;
     int idleCounter = 0;
 
-    public Player(GamePanel gamePanel, KeyHandler keyHandler){
-        this.gamePanel = gamePanel;
+    public Player(GamePanel gamePanel, KeyHandler keyHandler) {
+        super(gamePanel);
         this.keyHandler = keyHandler;
 
-        screenX = gamePanel.screenWidth/2 - gamePanel.tileSize/2;
-        screenY = gamePanel.screenHeight/2 - gamePanel.tileSize/2;
+        screenX = gamePanel.screenWidth / 2 - gamePanel.tileSize / 2;
+        screenY = gamePanel.screenHeight / 2 - gamePanel.tileSize / 2;
 
-        collisionBox = new Rectangle(8,8,gamePanel.tileSize -16,gamePanel.tileSize -16);
+        collisionBox = new Rectangle(8, 8, gamePanel.tileSize - 16, gamePanel.tileSize - 16);
         collisionBoxDefaultX = collisionBox.x;
         collisionBoxDefaultY = collisionBox.y;
 
         setDefaultValues();
         getPlayerImage();
     }
-    public void setDefaultValues(){
+
+    public void setDefaultValues() {
+        maxHealth = 10;
+        health = maxHealth;
+
         worldX = gamePanel.tileSize * 15;
         worldY = gamePanel.tileSize * 15;
         speed = 4;
@@ -51,139 +49,134 @@ public class Player extends Entity{
         right2 = setupImage("player/right2");
     }
 
-    public BufferedImage setupImage(String imageName){
-        UtilityTool uTool = new UtilityTool(gamePanel);
-        return uTool.loadScaledImage(imageName);
-
-    }
-
     public void update() {
-        if (keyHandler.upPressed || keyHandler.downPressed || keyHandler.leftPressed || keyHandler.rightPressed) {
-            if(keyHandler.upPressed){
+
+        if (keyHandler.upPressed || keyHandler.downPressed || keyHandler.leftPressed || keyHandler.rightPressed || keyHandler.ePressed) {
+            if (keyHandler.upPressed) {
                 direction = "up";
             }
-            if(keyHandler.downPressed){
+            if (keyHandler.downPressed) {
                 direction = "down";
             }
-            if(keyHandler.leftPressed){
+            if (keyHandler.leftPressed) {
                 direction = "left";
             }
-            if(keyHandler.rightPressed){
+            if (keyHandler.rightPressed) {
                 direction = "right";
             }
-            // Check collision
-            gamePanel.collisionHandler.checkTile(this);
-            // Check object collision
-            int objIndex = gamePanel.collisionHandler.checkObject(this,true);
+
+            // CHECK COLLISION
+            gamePanel.collisionHandler.checkTile(this); //check tile collision
+
+            int objIndex = gamePanel.collisionHandler.checkObject(this, true); //pickup object if any
             pickUpObject(objIndex);
-            // Move player if no collision in the direction
-            if (keyHandler.upPressed && !collisionUp && !collisionOn && worldY - speed >= 0) {
+
+            int npcIndex = gamePanel.collisionHandler.checkEntity(this, gamePanel.npc); //check entity collision
+            interactNPC(npcIndex);
+
+            int mobIndex = gamePanel.collisionHandler.checkEntity(this, gamePanel.mob); //check mob collision
+            contactMob(mobIndex);
+
+            //CHECK EVENT
+            gamePanel.eventHandler.checkEvent();
+
+            // MOVE PLAYER
+            if (direction.equals("up") && !collisionUp && worldY - speed >= 0 && !keyHandler.ePressed) {
                 worldY -= speed;
             }
-            if (keyHandler.downPressed && !collisionDown && !collisionOn && worldY + speed < gamePanel.worldHeight - gamePanel.tileSize) {
+            if (direction.equals("down") && !collisionDown && worldY + speed < gamePanel.worldHeight - gamePanel.tileSize && !keyHandler.ePressed) {
                 worldY += speed;
             }
-            if (keyHandler.leftPressed && !collisionLeft && !collisionOn && worldX - speed >= 0) {
+            if (direction.equals("left") && !collisionLeft && worldX - speed >= 0 && !keyHandler.ePressed) {
                 worldX -= speed;
             }
-            if (keyHandler.rightPressed && !collisionRight && !collisionOn && worldX + speed < gamePanel.worldWidth - gamePanel.tileSize) {
+            if (direction.equals("right") && !collisionRight && worldX + speed < gamePanel.worldWidth - gamePanel.tileSize && !keyHandler.ePressed) {
                 worldX += speed;
             }
 
-            spriteCounter++;
-            if (spriteCounter > 12) {
-                if (spriteNumber == 1) {
-                    spriteNumber = 2;
-                } else if (spriteNumber == 2) {
-                    spriteNumber = 1;
-                }
-                spriteCounter = 0;
-            }
-        }
-        else {
-            idleCounter++;
-            if (idleCounter > 20) {
-                spriteNumber = 1;
-                idleCounter = 0;
-            }
-        }
-    }
-
-    public void pickUpObject(int i){
-        if(i != 999){
-            String objectName = gamePanel.obj[i].name;
-
-            switch (objectName){
-                case "KEY":
-                    hasKey++;
-                    gamePanel.obj[i] = null;
-                    gamePanel.playSoundEffect(1);
-                    gamePanel.ui.showMessage("You have found a key!");
-                    break;
-                case "DOOR":
-                    if(hasKey > 0){
-                        hasKey--;
-                        gamePanel.obj[i] = null;
-                        gamePanel.ui.showMessage("You have opened the door!");
-                        gamePanel.playSoundEffect(2);
-                    } else if (hasKey == 0){ // If player has no key
-                        gamePanel.ui.showMessage("You need a key to open this door!");
+                spriteCounter++;
+                if (spriteCounter > 12 && !keyHandler.ePressed) {
+                    if (spriteNumber == 1) {
+                        spriteNumber = 2;
+                    } else if (spriteNumber == 2) {
+                        spriteNumber = 1;
                     }
-                    break;
-                case "SWORD":
-                    gamePanel.obj[i] = null;
-                    speed += 2;
-                    gamePanel.playSoundEffect(4);
-                    gamePanel.ui.showMessage("Your speed has increased!");
-                    break;
-                case "CHEST":
-                    gamePanel.obj[i] = null;
-                    gamePanel.ui.gameFinished = true;
-                    gamePanel.stopMusic();
-                    gamePanel.playSoundEffect(3);
-                    break;
+                    spriteCounter = 0;
+                }
+            }
+        else{
+                idleCounter++;
+                if (idleCounter > 20) {
+                    spriteNumber = 1;
+                    idleCounter = 0;
+                }
+            }
+            if(invulnrable){
+                invulnrableCounter++;
+                if(invulnrableCounter > 60){
+                    invulnrable = false;
+                    invulnrableCounter = 0;
+                }
+            }
+        }
+
+        public void pickUpObject(int i){
+            if (i != 999) {
+
+            }
+        }
+
+    public void draw(Graphics2D g2) {
+        BufferedImage playerImage = getImageForDirection(direction, spriteNumber);;
+
+        int x = screenX;
+        int y = screenY;
+        if(screenX > worldX){
+            x = worldX;
+        }
+        if(screenY > worldY){
+            y = worldY;
+        }
+        int rightOffset = gamePanel.screenWidth - screenX;
+        if(rightOffset > gamePanel.worldWidth - worldX){
+            x = gamePanel.screenWidth - (gamePanel.worldWidth - worldX);
+        }
+        int bottomOffset = gamePanel.screenHeight - screenY;
+        if(bottomOffset > gamePanel.worldHeight - worldY){
+            y = gamePanel.screenHeight - (gamePanel.worldHeight - worldY);
+        }
+
+        if(invulnrable){
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f)); // Set transparency if invulnerable
+        }
+        g2.drawImage(playerImage, x, y, null); // Draw player
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f)); // Reset transparency
+
+        if(gamePanel.debug)renderDebug(g2);
+    }
+
+    public void interactNPC(int i){
+        if(i != 999){
+            if (gamePanel.keyHandler.ePressed) {
+                gamePanel.gameState = gamePanel.dialogueState;
+                gamePanel.npc[i].speak();
+            };
+        }
+    }
+
+    public void contactMob(int i){
+        if(i != 999){
+            if(!invulnrable) {
+                health -= 1;
+                invulnrable = true;
             }
         }
     }
 
-    public void render(Graphics2D g2) {
-        BufferedImage playerImage = null;
+    public void renderDebug(Graphics2D g2) {
 
-        switch (direction) {
-            case "up":
-                if (spriteNumber == 1) {
-                    playerImage = up1;
-                }
-                if (spriteNumber == 2) {
-                    playerImage = up2;
-                }
-                break;
-            case "down":
-                if (spriteNumber == 1) {
-                    playerImage = down1;
-                }
-                if (spriteNumber == 2) {
-                    playerImage = down2;
-                }
-                break;
-            case "left":
-                if (spriteNumber == 1) {
-                    playerImage = left1;
-                }
-                if (spriteNumber == 2) {
-                    playerImage = left2;
-                }
-                break;
-            case "right":
-                if (spriteNumber == 1) {
-                    playerImage = right1;
-                }
-                if (spriteNumber == 2) {
-                    playerImage = right2;
-                }
-                break;
-        }
-        g2.drawImage(playerImage, screenX, screenY, null);
+        g2.setColor(Color.RED);
+        g2.drawRect(screenX + collisionBox.x, screenY + collisionBox.y, collisionBox.width, collisionBox.height);
     }
 }
 

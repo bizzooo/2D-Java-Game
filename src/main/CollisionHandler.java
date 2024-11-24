@@ -22,7 +22,6 @@ public class CollisionHandler {
         int tileNum1, tileNum2;
 
         // Reset collision flags
-        entity.collisionOn = false;
         entity.collisionUp = false;
         entity.collisionDown = false;
         entity.collisionLeft = false;
@@ -89,7 +88,7 @@ public class CollisionHandler {
                         entity.collisionBox.y -= entity.speed;
                         if(entity.collisionBox.intersects(gamePanel.obj[i].collisionBox)){
                             if(gamePanel.obj[i].collision){
-                                entity.collisionOn = true;
+                                entity.collisionUp = true;
                             }
                             if (player) {
                                 index = i;
@@ -100,7 +99,7 @@ public class CollisionHandler {
                         entity.collisionBox.y += entity.speed;
                         if(entity.collisionBox.intersects(gamePanel.obj[i].collisionBox)){
                             if(gamePanel.obj[i].collision){
-                                entity.collisionOn = true;
+                                entity.collisionDown = true;
                             }
                             if (player) {
                                 index = i;
@@ -111,7 +110,7 @@ public class CollisionHandler {
                         entity.collisionBox.x -= entity.speed;
                         if (entity.collisionBox.intersects(gamePanel.obj[i].collisionBox)) {
                             if (gamePanel.obj[i].collision) {
-                                entity.collisionOn = true;
+                                entity.collisionLeft = true;
                             }
                             if (player) {
                                 index = i;
@@ -122,7 +121,7 @@ public class CollisionHandler {
                         entity.collisionBox.x += entity.speed;
                         if (entity.collisionBox.intersects(gamePanel.obj[i].collisionBox)) {
                             if (gamePanel.obj[i].collision) {
-                                entity.collisionOn = true;
+                                entity.collisionRight = true;
                             }
                             if (player) {
                                 index = i;
@@ -138,5 +137,110 @@ public class CollisionHandler {
             }
         }
         return index;
+    }
+    public int checkEntity(Entity entity, Entity[] target){
+        int index = 999;
+
+        for(int i = 0; i < target.length; i++){
+        if(target[i] != null){
+            //get entity's collision box
+            entity.collisionBox.x = entity.worldX + entity.collisionBox.x;
+            entity.collisionBox.y = entity.worldY + entity.collisionBox.y;
+            //Get the object's collision box
+            target[i].collisionBox.x = target[i].worldX + target[i].collisionBox.x;
+            target[i].collisionBox.y = target[i].worldY + target[i].collisionBox.y;
+
+            if (entity.direction.equals("up")) {
+                entity.collisionBox.y -= entity.speed;
+                if (entity.collisionBox.intersects(target[i].collisionBox)) {
+                    if(target[i] != entity) {
+                        entity.collisionUp = true;
+                        index = i;
+                    }
+                }
+            }
+            if (entity.direction.equals("down")) {
+                entity.collisionBox.y += entity.speed;
+                if (entity.collisionBox.intersects(target[i].collisionBox)) {
+                    if(target[i] != entity) {
+                        entity.collisionDown = true;
+                        index = i;
+                    }
+                }
+            }
+            if (entity.direction.equals("left")) {
+                entity.collisionBox.x -= entity.speed;
+                if (entity.collisionBox.intersects(target[i].collisionBox)) {
+                    if(target[i] != entity) {
+                        entity.collisionLeft = true;
+                        index = i;
+                    }
+                }
+            }
+            if (entity.direction.equals("right")) {
+                entity.collisionBox.x += entity.speed;
+                if (entity.collisionBox.intersects(target[i].collisionBox)) {
+                    if (target[i] != entity) {
+                        entity.collisionRight = true;
+                        index = i;
+                    }
+                }
+            }
+            //reset entity's collision box
+            entity.collisionBox.x = entity.collisionBoxDefaultX;
+            entity.collisionBox.y = entity.collisionBoxDefaultY;
+            target[i].collisionBox.x = target[i].collisionBoxDefaultX;
+            target[i].collisionBox.y = target[i].collisionBoxDefaultY;
+        }
+    }
+        return index;
+    }
+    public boolean checkPlayerCollision(Entity entity){
+
+        boolean contactPlayer = false;
+
+        entity.collisionBox.x = entity.worldX + entity.collisionBox.x;
+        entity.collisionBox.y = entity.worldY + entity.collisionBox.y;
+        //Get the object's collision box
+        gamePanel.player.collisionBox.x = gamePanel.player.worldX + gamePanel.player.collisionBox.x;
+        gamePanel.player.collisionBox.y = gamePanel.player.worldY + gamePanel.player.collisionBox.y;
+
+        switch (entity.direction){
+            case "up":
+                entity.collisionBox.y -= entity.speed;
+                if(entity.collisionBox.intersects(gamePanel.player.collisionBox)){
+                    entity.collisionUp = true;
+                    contactPlayer = true;
+                }
+                break;
+            case "down":
+                entity.collisionBox.y += entity.speed;
+                if(entity.collisionBox.intersects(gamePanel.player.collisionBox)){
+                    entity.collisionDown = true;
+                    contactPlayer = true;
+                }
+                break;
+            case "left":
+                entity.collisionBox.x -= entity.speed;
+                if (entity.collisionBox.intersects(gamePanel.player.collisionBox)) {
+                    entity.collisionLeft = true;
+                    contactPlayer = true;
+                }
+                break;
+            case "right":
+                entity.collisionBox.x += entity.speed;
+                if (entity.collisionBox.intersects(gamePanel.player.collisionBox)) {
+                    entity.collisionRight = true;
+                    contactPlayer = true;
+                }
+                break;
+        }
+        //reset entity's collision box
+        entity.collisionBox.x = entity.collisionBoxDefaultX;
+        entity.collisionBox.y = entity.collisionBoxDefaultY;
+        gamePanel.player.collisionBox.x = gamePanel.player.collisionBoxDefaultX;
+        gamePanel.player.collisionBox.y = gamePanel.player.collisionBoxDefaultY;
+
+        return contactPlayer;
     }
 }
